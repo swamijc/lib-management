@@ -1,0 +1,2 @@
+2026-07-12 - Services were already running through lib-management-app/manage.sh, including ui-react on port 3000 and api-gateway on port 8000.
+2026-07-12 - Added application screenshot assets under docs/assets/app-screenshots and documented them in docs/application-screenshots.md.

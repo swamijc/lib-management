@@ -27,6 +27,7 @@ This folder contains the current, freeze-ready project documentation for busines
 
 ## Related Documents
 
+- `application-screenshots.md`
 - `screenshots.md`
 - `../diagrams/RENDER-INSTRUCTIONS.md`
 - `../lib-management-app/docs/priority-classification-and-hitl-approval.md`
