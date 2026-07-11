@@ -396,6 +396,15 @@ else
   cd "$SCRIPT_DIR"
 fi
 
+if contains_service "library-data-service"; then
+  info "Ensuring SQLite schema and sanitized seed data…"
+  if python3 scripts/bootstrap_database.py; then
+    ok "Database bootstrap complete"
+  else
+    warn "Database bootstrap skipped; library-data-service will attempt startup initialization"
+  fi
+fi
+
 # =============================================================================
 # STEP 7 — Summary & optional service start
 # =============================================================================

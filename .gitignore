@@ -34,6 +34,7 @@ run/logs/
 run/pids/
 lib-management-app/run/logs/
 lib-management-app/run/pids/
+lib-management-app/run/*.sha256
 
 # Local databases and generated data
 *.db
