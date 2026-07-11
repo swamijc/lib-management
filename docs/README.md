@@ -8,6 +8,8 @@ This folder contains the current, freeze-ready project documentation for busines
   - `business-requirements-and-frs.md` — current business scope, BRD + FRS baseline, acceptance criteria.
 - `technical/`
   - `technical-implementation-requirements.md` — implemented architecture and technical requirements baseline.
+- `assets/`
+  - project screenshots and other documentation images.
 - `archive/`
   - previous draft documents retained for traceability.
 
@@ -25,5 +27,6 @@ This folder contains the current, freeze-ready project documentation for busines
 
 ## Related Documents
 
+- `screenshots.md`
 - `../diagrams/RENDER-INSTRUCTIONS.md`
 - `../lib-management-app/docs/priority-classification-and-hitl-approval.md`
