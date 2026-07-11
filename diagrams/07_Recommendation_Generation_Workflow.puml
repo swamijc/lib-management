@@ -1,0 +1,75 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Recommendation_Generation_Workflow
+!theme plain
+skinparam shadowing false
+skinparam activityBackgroundColor #F5F5F5
+skinparam titleFontSize 16
+
+title Recommendation Generation Workflow\n(FR-007, FR-008, FR-009, FR-010)
+
+start
+
+:Receive Version Comparison Result\nper library;
+
+if (New version released?) then (yes)
+
+  |Upgrade Assessment (FR-007)|
+  :Evaluate whether organization\ncan upgrade to new version;
+  if (Upgrade feasible?) then (yes)
+    :Recommendation: **Upgrade Available**;
+  else (no)
+    :Recommendation: **Existing Version Sufficient**;
+  endif
+
+  |Pros/Cons — Upgrade Path (FR-008)|
+  partition "Generate Pros for Upgrading" {
+    :Analyze release notes for\nnew features and fixes;
+    :Identify benefits of moving\nto latest version;
+    :List upgrade pros;
+  }
+  partition "Generate Cons for Upgrading" {
+    :Identify risks of upgrading\n(e.g., breaking changes);
+    :Consider compatibility with\nexisting applications;
+    :List upgrade cons;
+  }
+
+  |Pros/Cons — No-Upgrade Path (FR-009)|
+  partition "Generate Pros for Not Upgrading" {
+    :Identify stability benefits\nof current version;
+    :Note known working state\nin existing applications;
+    :List no-upgrade pros;
+  }
+  partition "Generate Cons for Not Upgrading" {
+    :Identify risks of staying\non current version;
+    :Note missing fixes/features\nin new release;
+    :List no-upgrade cons;
+  }
+
+else (no)
+
+  |Current Version Guidance|
+  :Recommendation: **Existing Version is Current**;
+  :No upgrade action required\nat this time;
+  :Include current version\nstatus in output;
+
+endif
+
+|Recommendation Content (FR-010)|
+:Compile recommendation report per library:\n• Library Name\n• DB Version vs Latest Version\n• Upgrade decision guidance\n• Pros and Cons (if applicable)\n• Release Notes summary;
+
+:Pass recommendation content\nto Notification Service;
+
+stop
+
+note right
+  **Business Rule**
+  Every new version release must produce:
+  1. Can I upgrade? OR Existing is enough?
+  2. Pros and cons if upgraded
+  3. Pros and cons if not upgraded
+end note
+
+@enduml

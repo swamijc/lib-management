@@ -1,0 +1,78 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Aggregation_and_Comparison_Workflow
+!theme plain
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam titleFontSize 16
+
+title Aggregation and Version Comparison Workflow\n(FR-004, FR-005, FR-006)
+
+package "Input Sources" {
+  database "Existing Database" as DB {
+    card "Library Record" as DBRec {
+      **Library ID**
+      ----
+      Library Name
+      Current Version
+      Information Notes
+      Record Date
+    }
+  }
+
+  cloud "External Library Source" as EXT {
+    card "Latest Library Info" as ExtRec {
+      **Library ID**
+      ----
+      Latest Version
+      Release Notes
+      Retrieval Date
+      Source Reference
+    }
+  }
+}
+
+rectangle "Aggregation Process (FR-004)" as AGG #E8F4FD {
+  component "Data Alignment" as Align
+  component "Record Matching\n(by Library)" as Match
+  component "Merged Dataset" as Merged
+}
+
+rectangle "Version Comparison (FR-005)" as CMP #FFF3E0 {
+  component "Version Comparator" as VerCmp
+  component "New Release Detector (FR-006)" as Detector
+}
+
+rectangle "Comparison Output" as OUT #E8F5E9 {
+  card "Version Comparison Result" as Result {
+    Library Name
+    Database Version
+    Latest Version
+    New Version Released (Y/N)
+    Comparison Date
+  }
+}
+
+DB --> Align : FR-003\nRetrieve existing records
+EXT --> Align : FR-002\nPull/Scrape latest info
+
+Align --> Match : Align by Library ID/Name
+Match --> Merged : Combined dataset per library
+
+Merged --> VerCmp : Input aggregated data
+VerCmp --> Detector : Compare version numbers
+
+Detector --> Result : If Latest > DB Version\n→ New Version Released = Yes
+Detector --> Result : If Latest = DB Version\n→ New Version Released = No
+Detector --> Result : If Latest < DB Version\n→ Flag for review
+
+note bottom of Merged
+  Aggregated record contains:
+  • DB Version + Information Notes
+  • Latest Version + Release Notes
+  • Source retrieval timestamp
+end note
+
+@enduml

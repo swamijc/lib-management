@@ -1,0 +1,264 @@
+================================================================================
+  LIBRARY MANAGEMENT APP — ALL COMMAND PROMPTS & TERMINAL COMMANDS
+  Generated : 2026-07-08
+  Tool      : GitHub Copilot (Claude Sonnet 4.6)
+================================================================================
+
+================================================================================
+SECTION 1 — VERBATIM COPILOT CHAT PROMPTS (from VS Code transcripts)
+================================================================================
+These are the exact words typed in the GitHub Copilot prompt window, recovered
+from VS Code session transcript files.
+
+--------------------------------------------------------------------------------
+SESSION: 3133e17c  (2026-06-30 to 2026-07-02)
+--------------------------------------------------------------------------------
+
+  [2026-06-30 09:09]  install nodejs
+
+  [2026-06-30 09:10]  (pasted terminal output showing node not found)
+                      → setup.sh failed at step 1/7 — node missing
+
+  [2026-06-30 09:13]  ui-react  3000  stopped  -
+                      and update sqlite DB path also
+
+  [2026-07-02 12:42]  application sqlite path mapped my forend path update
+                      my path in application
+
+  [2026-07-02 13:31]  SDK name: ACI OPPWa Mobile SDK
+                      update the URL and fetch the version
+                      https://boots.docs.oppwa.com/integrations/mobile-sdk/release-notes-android
+                      fix the data issues in DB test confirm
+
+  [2026-07-02 13:35]  in SDK portfolio in android inside the version History
+                      list of versions is not parsed
+
+--------------------------------------------------------------------------------
+SESSION: ee51f894  (2026-07-05)
+--------------------------------------------------------------------------------
+
+  [2026-07-05 12:14]  also, URL I need to run
+
+  [2026-07-05 12:16]  what is the URL to start the application
+
+--------------------------------------------------------------------------------
+SESSION: dd852c29  (2026-07-08 — current)
+--------------------------------------------------------------------------------
+
+  [2026-07-08 11:30]  can you display ans save it in context.txt file all my
+                      command promopt used to build this library management app
+
+  [2026-07-08 11:33]  I want the text used in the prompt window
+
+================================================================================
+SECTION 2 — AI / COPILOT CHAT PROMPTS (Documented across all prior sessions)
+================================================================================
+These are the GitHub Copilot prompts recorded in ai-context/CHAT_HISTORY.txt
+covering Sessions 1 and 2 (2026-06-25 → 2026-07-01).
+
+--------------------------------------------------------------------------------
+SESSION 1 — 2026-06-25 to 2026-06-26
+--------------------------------------------------------------------------------
+
+TURN 1  — Context loading
+  PROMPT: "Read the full repo documentation and all 12 PlantUML diagrams and
+           understand the project."
+
+TURN 2  — Save context
+  PROMPT: "Save the full project context and conversation history to files so
+           I can continue in any AI tool."
+  RESULT: Created ai-context/PROJECT_CONTEXT.txt + ai-context/CHAT_HISTORY.txt
+
+TURN 3  — Build all 8 microservices + tests
+  PROMPT: "Build all 8 microservices with full FastAPI code, SQLAlchemy models,
+           and pytest test suites."
+  RESULT: 192 tests passing. All services built from scratch.
+
+TURN 4  — manage.sh orchestration script
+  PROMPT: "Create a manage.sh script to start/stop/restart/status/logs/health
+           all services with correct dependency ordering."
+  RESULT: manage.sh with full lifecycle management.
+
+TURN 5  — Fix startup issues
+  PROMPT: "Fix the startup issues — bcrypt incompatibility, DB not initialising,
+           column name bugs. Seed test data."
+  RESULT: bcrypt → pbkdf2_sha256, create_all() in lifespan, DB seeded with
+          8 test libraries + admin/viewer users.
+
+TURN 6  — Fix UI login + navigation
+  PROMPT: "Fix the Streamlit UI login page and navigation between pages."
+  RESULT: st.navigation() with position="hidden", unique url_paths,
+          duplicate render() functions removed, data path mismatches fixed.
+
+TURN 7  — Migrate 119 real libraries from attached DB
+  PROMPT: "Migrate the 119 real library records from the attached SQLite DB
+           into the application."
+  RESULT: 119 libraries (74 Android, 45 iOS) + 211 version history + 13 app_settings.
+          SDK names cleaned (mid-word spaces from PDF import).
+          API limit=1000 fix (was defaulting to 100).
+
+TURN 8  — Enterprise UI redesign (Libraries + Management pages)
+  PROMPT: "Redesign the Libraries and Management pages to enterprise standard —
+           dataframe tables, search, filter, add/delete with CSV export."
+  RESULT: Dataframe tables, search/filter, Add Library (POST endpoint added),
+          Delete (DELETE endpoint added with cascade), CSV export.
+
+TURN 9  — LLM & Settings page
+  PROMPT: "Build a Settings page for LLM configuration. LLM prompts should be
+           read from the DB at runtime, not hardcoded."
+  RESULT: Settings router added, LLM prompts read from DB, 4-tab Settings page.
+
+TURN 10 — Full gap analysis → ROADMAP.md
+  PROMPT: "Do a full gap analysis of everything missing vs enterprise requirements
+           and create a ROADMAP.md."
+  RESULT: ROADMAP.md (683 lines, v2.0).
+
+TURN 11 — Build P1 features
+  PROMPT: "Build all Priority 1 features from the ROADMAP: audit log, lifecycle
+           state machine, LLM usage logging, user management, change password."
+  RESULT: Audit Trail, Governance, Analytics, Users pages. Dashboard Risk Score widget.
+
+TURN 12 — Cross-check + fix bugs
+  PROMPT: "Run a full cross-check of all 80 API endpoints and fix any bugs found."
+  RESULT: 80/80 API checks pass after fixing cascade delete, viewer RBAC,
+          cron field name, and NameError in dashboard.
+
+TURN 13 — Build P2/P3 features
+  PROMPT: "Build all Priority 2 and 3 features: CVE scanning, Teams & ownership,
+           SLA enforcement, release notes, Package Profile page, Reports page."
+  RESULT: CVE scanning via OSV.dev, Teams CRUD, SLA overdue/summary endpoints,
+          GitHub release notes, Package Profile (8 tabs), Teams UI, Reports page,
+          Dashboard SLA + CVE widgets. Navigation expanded to 15 pages.
+
+TURN 14 — Update ai-context (v2.0)
+  PROMPT: "Update the ai-context files to reflect all changes made in this session."
+
+TURN 15 — Scheduler UX overhaul
+  PROMPT: "Rebuild the scheduler page with a visual cron builder, frequency presets,
+           time pickers, live cron preview, and a real-time execution report with
+           HITL approval gates between stages."
+  RESULT: Visual cron builder + real-time execution report (5 stage cards, native
+          Streamlit components only, auto-refresh every 3 seconds, run history,
+          balloons on success). Fixed HTML-in-tabs bug.
+
+TURN 16 — Full test suite + context update (v3.0)
+  PROMPT: "Run the full test suite and update the ai-context files."
+  RESULT: 42/43 checks pass. ai-context updated to v3.0.
+
+--------------------------------------------------------------------------------
+SESSION 2 — 2026-07-01
+--------------------------------------------------------------------------------
+
+TURN 17 — React UI micro-pass + CSS alignment fixes
+  PROMPT: "Fix the React UI: logo size responsive, sidebar alignment issues,
+           SLA Overview artifact line."
+
+TURN 18 — Frontend business logic audit
+  PROMPT: "Audit all frontend pages for any business logic (risk scores, thresholds,
+           criticality) that should live in the backend instead."
+  RESULT: Full inventory of frontend business rules identified. Migration plan created.
+
+TURN 19 — Backend business logic migration (Phase 1)
+  PROMPT: "Migrate all high-risk business rules to the backend using additive
+           non-breaking fields so the existing UI doesn't break."
+  RESULT: /sla/summary enriched with analytics, lifecycle endpoints emit
+          business_critical/confidence_score, api-gateway /business/weekly-digest added.
+
+TURN 20 — Frontend updated for backend-first consumption
+  PROMPT: "Update the React frontend to consume the new backend business logic
+           fields, with fallback for backward compatibility."
+  RESULT: Dashboard, HitlReview, Governance, Settings, WeeklyDigest updated.
+
+TURN 21 — Remove hardcoded / mock data
+  PROMPT: "Audit all React pages for hardcoded records or mock data and remove them.
+           All data must come from live API endpoints."
+  RESULT: All mock data removed. WeeklyDigest shows empty state if no data.
+
+TURN 22 — End-to-end application testing + bug fixes
+  PROMPT: "Do a full end-to-end test of every page and feature and fix all bugs."
+  RESULT: Full E2E pass. Fixed test regressions in recommendation-service,
+          scraper-service, scheduler-service.
+
+TURN 23 — Global async loader + per-button inline loaders
+  PROMPT: "Add a global async loader to the React UI and per-button inline loaders
+           on all action buttons."
+  RESULT: GlobalAsyncLoader component, per-button loaders on Scheduler,
+          Settings, Libraries, Users pages.
+
+TURN 24 — setup.sh optimization
+  PROMPT: "Optimise setup.sh to support targeted service setup with smart
+           dependency caching to avoid reinstalling unchanged deps."
+  RESULT: --service flag, --force-deps, SHA256 hash caching for Python/Node deps,
+          npm ci support, selective manage.sh restart.
+
+TURN 25 — manage.sh compatibility pass
+  PROMPT: "Verify manage.sh and setup.sh are fully compatible — same service list,
+           same names, correct help text."
+  RESULT: ALL_SERVICES aligned. Help text fixed.
+
+TURN 26 — ai-context files updated to v4.0
+  PROMPT: "Update the ai-context files to v4.0 with all session 2 changes."
+
+TURN 27 — Display + save all command prompts to context.txt
+  PROMPT: "can you display ans save it in context.txt file all my command promopt
+           used to build this library management app"
+
+TURN 28 — Get exact verbatim prompt text from window
+  PROMPT: "I want the text used in the prompt window"
+
+================================================================================
+SECTION 2 — TERMINAL COMMANDS (Shell / CLI)
+================================================================================
+These are the actual terminal commands run to set up, build, and operate the app.
+
+--- Environment Setup ---
+python library_req
+pip install -r library_req.txt
+source /Users/swaminathan.kannaiyan/Documents/src/lib-management/.venv/bin/activate
+brew install node
+brew install jq
+
+--- Project Setup ---
+cd lib-management-app
+sh setup.sh
+sh setup.sh --service all
+sh setup.sh --service <service-name>   # e.g. --service ui-react,api-gateway
+
+--- Service Management ---
+./manage.sh start
+./manage.sh start all
+./manage.sh restart
+./manage.sh stop
+./manage.sh status
+./manage.sh logs <service-name>
+./manage.sh health
+cd lib-management-app && ./manage.sh start all
+
+--- Virtual Environment (repeated across sessions) ---
+source /Users/swaminathan.kannaiyan/Documents/src/lib-management/.venv/bin/activate
+
+================================================================================
+SECTION 3 — KEY SERVICES & PORTS REFERENCE
+================================================================================
+
+SERVICE                PORT   ROLE
+─────────────────────────────────────────────────────────────────────────────
+library-data-service   8001   DB owner — CRUD, audit, lifecycle, CVE, teams, SLA
+scraper-service        8002   Maven / CocoaPods / SPM / GitHub scraper
+comparison-service     8003   Version comparison engine
+recommendation-service 8004   Rule-based + LLM recommendations
+notification-service   8005   Email (SMTP) + Teams (webhook)
+scheduler-service      8006   Cron pipeline orchestrator
+api-gateway            8000   JWT auth + RBAC proxy
+ui-service             8501   Streamlit MPA (legacy — 15 pages)
+ui-react               3000   React 18 + TypeScript + Vite (PRIMARY)
+─────────────────────────────────────────────────────────────────────────────
+
+React UI  : http://localhost:3000
+Streamlit : http://localhost:8501
+Admin     : admin / admin123
+Viewer    : viewer / viewer123
+
+================================================================================
+END OF CONTEXT
+================================================================================

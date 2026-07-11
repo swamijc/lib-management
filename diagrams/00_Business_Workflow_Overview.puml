@@ -1,0 +1,104 @@
+' Library Management Application — Business Workflow
+' Self-contained diagram (under 8KB — safe for PlantUML HTTP server)
+' Additional diagrams: plantuml/diagrams/ (01–12)
+
+@startuml Library_Management_Business_Workflow
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #E8F4FD
+  BorderColor #2E86AB
+  FontColor #1A1A1A
+}
+skinparam note {
+  BackgroundColor #FFF9E6
+  BorderColor #E6B800
+}
+skinparam titleFontSize 18
+
+title End-to-End Business Workflow\nLibrary Management Application
+
+|#LightBlue|Trigger|
+start
+:Regular schedule trigger fires;
+
+|#LightGreen|Step 1 — Database|
+:Connect to existing Database;
+:Retrieve library records for\nlibraries in use across applications;
+:Read for each library:\n• Library Name\n• Current Version\n• Information Notes;
+if (Records found?) then (yes)
+  :Prepare database dataset\nfor aggregation;
+else (no)
+  :Flag missing database entry;
+  :Continue with remaining libraries;
+endif
+
+|#LightYellow|Step 2 — External Sources|
+partition "For Each Monitored Library" {
+  :Identify external source for library;
+  :Pull or Scrape latest library version;
+  :Pull or Scrape release notes;
+  if (External source available?) then (yes)
+    :Store latest version and release notes;
+  else (no)
+    :Log retrieval failure;
+    :Continue with remaining libraries;
+  endif
+}
+
+|#LightCoral|Step 3 — Aggregation|
+:Combine database records with\nexternally retrieved library data;
+:Align per library:\nDB Version, Latest Version,\nInformation Notes, Release Notes;
+:Create aggregated dataset\nready for comparison;
+
+|#Plum|Step 4 — Version Comparison|
+:Compare Latest Version\nagainst Database Version;
+if (New version released?) then (yes)
+  :Result: New Version Available;
+  :Record DB Version, Latest Version, Date;
+else (no)
+  :Result: No New Version;
+  :Existing version is current;
+endif
+
+|#Wheat|Step 5 — Recommendation|
+if (New version released?) then (yes)
+  :Assess: Can upgrade?\nor Existing version sufficient?;
+  partition "Upgrade Path" {
+    :Generate Pros for upgrading;
+    :Generate Cons for upgrading;
+  }
+  partition "No-Upgrade Path" {
+    :Generate Pros for not upgrading;
+    :Generate Cons for not upgrading;
+  }
+  :Compile recommendation:\nUpgrade OR Sufficient + Pros/Cons;
+else (no)
+  :Existing version is sufficient;
+endif
+:Produce final recommendation content;
+
+|#HoneyDew|Step 6 — Email|
+:Format recommendation for email;
+:Send email to configured recipients;
+if (Email sent?) then (yes)
+  :Record status: Sent;
+else (no)
+  :Log failure; flag for retry;
+endif
+
+|#Lavender|Step 7 — Teams|
+:Format recommendation for Teams;
+:Post message to Teams group;
+if (Teams posted?) then (yes)
+  :Record status: Posted;
+else (no)
+  :Log failure; flag for retry;
+endif
+
+|#LightBlue|Completion|
+:Update schedule: Last Run, Next Run;
+stop
+
+@enduml

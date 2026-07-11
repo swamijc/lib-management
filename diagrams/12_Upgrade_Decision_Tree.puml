@@ -1,0 +1,42 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Upgrade_Decision_Tree
+!theme plain
+skinparam shadowing false
+skinparam titleFontSize 16
+
+title Upgrade Decision Tree\nBusiness Logic for Recommendation
+
+start
+
+:Version Comparison Complete;
+
+if (Is Latest Version > DB Version?) then (yes)
+  :**New Version Released**;
+
+  if (Can organization upgrade?) then (yes)
+    :Output: **Upgrade Available**;
+  else (no)
+    :Output: **Existing Version Sufficient**;
+  endif
+
+  :Generate Pros for Upgrading;
+  :Generate Cons for Upgrading;
+  :Generate Pros for Not Upgrading;
+  :Generate Cons for Not Upgrading;
+
+  :Present both paths to stakeholder\nfor informed decision;
+
+else (no)
+  :**No New Version Released**;
+  :Output: Existing version is current;
+  :No upgrade action required;
+endif
+
+:Include in Email & Teams notification;
+
+stop
+
+@enduml

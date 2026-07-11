@@ -1,0 +1,81 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Business_Context_Overview
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam titleFontSize 18
+skinparam packageStyle rectangle
+
+title Library Management Application\nBusiness Context Overview
+
+actor "Application Teams" as AppTeams
+actor "Library Management\nUsers" as LibUsers
+actor "Notification\nRecipients" as Recipients
+actor "Client /\nBusiness Owner" as Owner
+
+rectangle "Organization" {
+  rectangle "Existing Applications" as Apps {
+    component "Application A" as AppA
+    component "Application B" as AppB
+    component "Application N" as AppN
+  }
+
+  database "Existing Database" as DB {
+    frame "Library Records" {
+      [Library Name]
+      [Current Version]
+      [Information Notes]
+    }
+  }
+
+  rectangle "Library Management Application\n(Single Organization-wide Application)" as LibApp #E8F4FD {
+    component "Library Pull/Scrape" as Scraper
+    component "Aggregation &\nComparison Logic" as Compare
+    component "Recommendation\nEngine" as Recommend
+    component "Notification\nService" as Notify
+  }
+
+  cloud "External Library Sources" as External {
+    [Latest Version]
+    [Release Notes]
+  }
+
+  rectangle "Communication Channels" as Channels {
+    component "Email" as Email
+    component "Microsoft Teams\nGroup" as Teams
+  }
+}
+
+AppA --> DB : Uses libraries\n(maintained in DB)
+AppB --> DB
+AppN --> DB
+
+LibApp --> DB : FR-003\nRead existing library records\n(version + information notes)
+LibApp --> External : FR-002\nPull/Scrape latest version\nand release notes
+
+Scraper --> Compare
+Compare --> Recommend
+Recommend --> Notify
+
+Notify --> Email : FR-011\nRegular email notification
+Notify --> Teams : FR-012\nRegular Teams group post
+
+Email --> Recipients
+Teams --> Recipients
+
+LibUsers --> LibApp : Review recommendations
+Owner --> LibApp : Business oversight
+AppTeams --> DB : Maintain library records
+
+note right of LibApp
+  **Business Objective**
+  One application to manage libraries
+  across the entire organization
+end note
+
+@enduml

@@ -1,0 +1,57 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Use_Case_Diagram
+!theme plain
+skinparam shadowing false
+skinparam titleFontSize 16
+
+title Use Case Diagram — Library Management Application
+
+left to right direction
+
+actor "Application\n(System)" as System
+actor "Library Management\nUser" as User
+actor "Notification\nRecipient" as Recipient
+
+rectangle "Library Management Application" {
+
+  usecase "UC-001\nPull Latest Library\nInformation" as UC1
+  usecase "UC-002\nRetrieve Existing Library\nRecords from Database" as UC2
+  usecase "UC-003\nCompare Versions and\nGenerate Recommendations" as UC3
+  usecase "UC-004\nSend Regular Email\nNotification" as UC4
+  usecase "UC-005\nPost Regular Teams\nGroup Message" as UC5
+
+  usecase "Aggregate Library Data" as UCAGG
+  usecase "Detect New Version Release" as UCDET
+  usecase "Generate Upgrade Pros/Cons" as UCPRO
+  usecase "Generate No-Upgrade Pros/Cons" as UCCON
+
+  UC1 ..> UCAGG : <<include>>
+  UC2 ..> UCAGG : <<include>>
+  UC3 ..> UCAGG : <<include>>
+  UC3 ..> UCDET : <<include>>
+  UC3 ..> UCPRO : <<include>>
+  UC3 ..> UCCON : <<include>>
+  UC4 ..> UC3 : <<include>>
+  UC5 ..> UC3 : <<include>>
+}
+
+System --> UC1
+System --> UC2
+System --> UC3
+System --> UC4
+System --> UC5
+
+User --> UC3 : Reviews recommendations
+Recipient --> UC4 : Receives email
+Recipient --> UC5 : Receives Teams post
+
+note bottom of UC3
+  Core business capability:
+  Compare versions and produce
+  upgrade guidance with pros/cons
+end note
+
+@enduml

@@ -1,0 +1,52 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Business_Data_Flow
+!theme plain
+skinparam shadowing false
+skinparam titleFontSize 16
+
+title Business Data Flow Diagram
+
+rectangle "Data Sources" {
+  collections "DB Library Records" as D1
+  collections "External Library Data" as D2
+}
+
+rectangle "Processing" {
+  component "Aggregation" as P1
+  component "Version Comparison" as P2
+  component "Recommendation Engine" as P3
+  component "Notification Formatter" as P4
+}
+
+rectangle "Data Outputs" {
+  collections "Comparison Results" as O1
+  collections "Recommendations\n(Pros/Cons)" as O2
+  collections "Email Notifications" as O3
+  collections "Teams Notifications" as O4
+}
+
+D1 --> P1 : Library Name\nCurrent Version\nInformation Notes
+D2 --> P1 : Latest Version\nRelease Notes
+
+P1 --> P2 : Aggregated Dataset
+P2 --> O1 : Version Comparison Result
+P2 --> P3 : Comparison + Release Notes\n+ Information Notes
+
+P3 --> O2 : Recommendation Report\n• Upgrade / Sufficient\n• Pros & Cons
+
+O2 --> P4 : Recommendation Content
+P4 --> O3 : Formatted Email
+P4 --> O4 : Formatted Teams Message
+
+note as N1
+  **Data Entities**
+  Application, Library, Version,
+  Release Notes, Information Note,
+  Comparison Result, Recommendation,
+  Notification, Email, Teams Post
+end note
+
+@enduml

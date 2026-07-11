@@ -1,0 +1,268 @@
+================================================================================
+  LIBRARY MANAGEMENT APPLICATION — CHAT HISTORY
+  Tool: GitHub Copilot (Claude Sonnet 4.6)
+  Session: 2026-06-25 → 2026-07-01
+  Last Updated: 2026-07-01
+================================================================================
+
+HOW TO CONTINUE IN ANY AI TOOL:
+  1. Paste PROJECT_CONTEXT.txt  → "Here is the full project context:"
+  2. Paste this file            → "Here is the conversation history:"
+  3. Say what you want to do next. All services are running.
+
+================================================================================
+SESSION SUMMARY — ALL TURNS
+================================================================================
+
+TURN 1  — Context loading
+  Read full repo documentation + 12 PlantUML diagrams.
+
+TURN 2  — Save context
+  Created ai-context/PROJECT_CONTEXT.txt + CHAT_HISTORY.txt
+
+TURN 3  — Build all 8 microservices + tests
+  192 tests passing. All services built from scratch.
+
+TURN 4  — manage.sh orchestration script
+  start/stop/restart/status/logs/health with dependency ordering.
+
+TURN 5  — Fix startup issues
+  bcrypt→pbkdf2_sha256, create_all() in lifespan, column name bugs,
+  DB seeded with 8 test libraries + admin/viewer users.
+
+TURN 6  — Fix UI login + navigation
+  st.navigation() with position="hidden", unique url_paths,
+  duplicate render() functions removed, data path mismatches fixed.
+
+TURN 7  — Migrate 119 real libraries from attached DB
+  119 libraries (74 Android, 45 iOS) + 211 version history + 13 app_settings.
+  SDK names cleaned (mid-word spaces from PDF import).
+  API limit=1000 fix (was defaulting to 100).
+
+TURN 8  — Enterprise UI redesign (Libraries + Management pages)
+  Dataframe tables, search/filter, Add Library (POST endpoint added),
+  Delete (DELETE endpoint added with cascade), CSV export.
+
+TURN 9  — LLM & Settings page
+  Added settings router (LLM config, prompts, app settings).
+  LLM prompts now read from DB at runtime (override hardcoded).
+  4-tab Settings page built.
+
+TURN 10 — Full gap analysis → ROADMAP.md (683 lines, v2.0)
+
+TURN 11 — Build P1 features
+  Backend: audit-log, lifecycle state machine, LLM usage logging,
+           user management (CRUD), change-password endpoint.
+  UI: Audit Trail, Governance, Analytics, Users pages.
+  Dashboard: Risk Score widget (0–100).
+
+TURN 12 — Cross-check + fix bugs
+  80/80 API checks after fixing:
+  - cascade delete (library_update_log missing cascade)
+  - viewer write → 403 (added RBAC to proxy)
+  - cron_expression → cron field name
+  - NameError: need_upg → rec_upgrade in dashboard
+
+TURN 13 — Build P2/P3 features
+  CVE scanning via OSV.dev (no API key, caches in cve_cache table)
+  Teams & ownership (ApplicationTeam, LibraryOwnership ORM + CRUD endpoints)
+  SLA overdue/approaching/summary endpoints
+  Release notes from GitHub API (when repo_url is GitHub)
+  Package Profile page (8 tabs: Overview/CVE/Release Notes/AI Rec/
+    Lifecycle/Teams/Version History/AI Chat with rule-based fallback)
+  Teams UI page (create/assign/bulk-assign)
+  Reports page (SLA dashboard, lifecycle chart, PDF export via fpdf2, CSV)
+  Dashboard: SLA + Lifecycle + CVE widgets (3-column row)
+  Navigation expanded to 15 pages.
+
+TURN 14 — Update ai-context (v2.0)
+
+TURN 15 — Scheduler UX overhaul (2026-06-26)
+  Requested: easy cron builder + detailed execution report.
+  Built visual cron builder (frequency presets + time pickers + live preview).
+  Built real-time execution report with:
+  - 5 stage cards (pure native Streamlit — no HTML)
+  - Each card: status badge, duration metric, items count, message, retry count
+  - HITL approval gates between stages (Acknowledge → Approve to proceed)
+  - Auto-refresh every 3 seconds
+  - Duration bar chart after completion
+  - 🎈 Balloons on success
+  - Run History with full drill-down
+
+  BUG FIXED: Previous version used st.markdown(HTML, unsafe_allow_html=True)
+  inside st.tabs() — HTML rendered as raw text. Replaced with 100% native
+  Streamlit components (st.container(border=True), st.success/error/metric etc.)
+
+TURN 16 — Full test suite + context update (2026-06-26)
+  42/43 checks pass (1 test script bug: health returns list not dict)
+  All actual features verified working end-to-end.
+  ai-context files updated to v3.0.
+
+================================================================================
+SESSION 2 — 2026-07-01
+================================================================================
+
+TURN 17 — React UI micro-pass + CSS alignment fixes
+  Logo size made responsive per screen size.
+  Sidebar alignment issues resolved.
+  SLA Overview UI artifact line fixed (component + CSS hardening).
+  Full alignment pass across entire application.
+
+TURN 18 — Frontend business logic audit
+  Identified all business logic written in the frontend (risk scores,
+  priority thresholds, criticality, lifecycle confidence, drift rules).
+  Created minimal migration plan to move high-risk rules to backend
+  without breaking existing UI/APIs.
+
+TURN 19 — Backend business logic migration (Phase 1)
+  Migrated all high-risk business rules to backend using additive
+  non-breaking fields pattern:
+  — library-data-service/routers/sla.py: /sla/summary now emits enriched
+    analytics: priority_counts, risk_score, sla_forecast, deprecated,
+    pie_distribution, platform_distribution, pending_review_high_risk,
+    at_risk_summary, owner_workload, rebalance_suggestion, backend_rules.
+  — library-data-service/routers/lifecycle.py: list/get endpoints now emit
+    business_critical, confidence_score, confidence_band per record.
+  — library-data-service/models/schemas.py: lifecycle model extended.
+  — library-data-service/config.py: use_backend_business_rules toggle added.
+  — api-gateway/routers/health.py: enriched with thresholds, threshold_alerts,
+    policy_drift_alerts, policy_drift_summary, backend_rules.
+  — api-gateway/routers/business.py (NEW): /api/v1/business/weekly-digest
+    computes executive digest server-side from live service APIs.
+  — api-gateway/main.py: registered business.router before catch-all proxy.
+  — api-gateway/config.py: use_backend_business_rules toggle added.
+
+TURN 20 — Frontend updated for backend-first consumption
+  — src/api/types.ts: expanded SLA/lifecycle types + WeeklyDigestSummary.
+  — src/api/client.ts: added businessApi.weeklyDigest.
+  — Dashboard.tsx: backend-first for risk/forecast/distributions/at-risk/workload
+    with compatibility fallback.
+  — HitlReview.tsx: prefers backend confidence/criticality if available.
+  — Governance.tsx: prefers backend confidence/criticality if available.
+  — Settings.tsx: backend-first threshold/policy drift + per-key inline save loaders.
+  — WeeklyDigest.tsx: backend digest endpoint; no mock fallback; loading/error/empty
+    + retry state machine.
+
+TURN 21 — Remove hardcoded / mock data
+  Audited all pages and components for hardcoded records, mock data points,
+  and static fallback objects. Removed all. All data comes from live API endpoints.
+  WeeklyDigest confirmed: no mock digest object, shows empty state if no data.
+
+TURN 22 — End-to-end application testing + bug fixes
+  Full E2E test pass across every page and feature:
+  — Auth login/logout, JWT refresh, 401 redirect.
+  — Libraries: list, create, edit, delete, bulk fetch, sync Maven URLs.
+  — Scheduler: trigger, poll, per-step retry, retry-from-here.
+  — SLA: summary enriched fields, overdue, approaching.
+  — Lifecycle/HITL: list, init, approve, reject, complete, approve-no-action.
+  — Settings: per-key save, threshold/policy drift alerts.
+  — Users: create, deactivate, reactivate.
+  — WeeklyDigest: loading → data → empty → retry.
+  — Notification reliability: stats + failure classification.
+  Fixed test regressions in:
+    services/recommendation-service/tests/test_llm_generator.py
+    services/recommendation-service/tests/test_rule_based.py
+    services/scraper-service/tests/test_strategies.py
+    services/scheduler-service/tests/test_scheduler.py
+
+TURN 23 — Global async loader + per-button inline loaders
+  — GlobalAsyncLoader component added (src/components/GlobalAsyncLoader.tsx).
+    Delayed show + min-visible anti-flicker; mounted in Layout.tsx.
+    Styles added to src/styles/globals.css.
+  — Per-button inline loaders added to Scheduler.tsx (per-step retry actions).
+  — Per-button inline loaders added to Settings.tsx (per-key save actions).
+  — Per-button inline loaders added to Libraries.tsx (bulk fetch/sync).
+  — Per-button inline loaders added to Users.tsx (create/deactivate/reactivate).
+
+TURN 24 — setup.sh optimization
+  Enhanced setup.sh to support targeted service setup and smart dependency caching:
+  — New flags: --service <name|a,b,c|all>, --force-deps, --help
+  — Service name validation against ALL_SERVICES list.
+  — Python dependency install skipped when combined_requirements.sha256 unchanged.
+  — Node dependency install skipped when package.json/package-lock.json hash unchanged.
+  — Uses npm ci (if lockfile exists) or npm install.
+  — DB init skipped when library-data-service not in scope.
+  — Selective manage.sh restart for scoped service starts.
+  — run/ directory used for hash cache files.
+
+TURN 25 — manage.sh compatibility pass
+  Verified ALL_SERVICES in setup.sh exactly matches START_ORDER in manage.sh.
+  Both contain the same 9 services in compatible name format.
+  Fixed stale help text: "start all 8 services" → "start all 9 services".
+
+TURN 26 — ai-context files updated to v4.0 (this turn)
+  PROJECT_CONTEXT.txt updated to reflect 9-service architecture, React UI,
+  backend-first migration, new endpoints, enhanced setup.sh, test results.
+  CHAT_HISTORY.txt updated with all session 2 turns (17–26).
+
+================================================================================
+CURRENT SYSTEM STATE (2026-07-01)
+================================================================================
+
+SERVICES (all 9 running):
+  library-data-service  8001  running
+  scraper-service        8002  running
+  comparison-service     8003  running
+  recommendation-service 8004  running
+  notification-service   8005  running
+  scheduler-service      8006  running
+  api-gateway            8000  running
+  ui-react               3000  running   ← PRIMARY UI (React 18 + Vite)
+  ui-service             8501  running   ← legacy Streamlit
+
+React UI  : http://localhost:3000
+Streamlit : http://localhost:8501
+Admin: admin / admin123  |  Viewer: viewer / viewer123
+
+DB COUNTS (approximate):
+  119 libraries · 3 teams · 7 lifecycle entries · 17 audit entries
+  7 LLM usage records · 2 CVE scans · 211 version history · 8 users
+
+TEST RESULTS (2026-07-01):
+  library-data-service  25 passed
+  api-gateway           15 passed
+  scraper-service       34 passed
+  comparison-service    24 passed
+  recommendation-service 25 passed
+  notification-service  12 passed
+  scheduler-service     19 passed
+  ui-service            38 passed
+  npm run build         PASSED
+
+KNOWN LIMITATIONS:
+  - LLM not active (no API key configured — configure in Settings → LLM)
+  - SQLite in use (not production PostgreSQL)
+  - No real email/Teams configured (SMTP/webhook in .env)
+  - CVE scanned: only 2 libraries so far (trigger from Package Profile)
+  - Recommendations table empty — trigger a pipeline run to populate
+  - ui-react has no automated test suite (vitest not wired yet)
+
+NEXT STEPS (suggested):
+  A. Configure LLM: Settings → LLM Config → enter API key → enable → save
+  B. Trigger pipeline: Scheduler → Manual Trigger
+     (scrapes 119 libs, compares, generates 119 AI recs, sends notifications)
+  C. Seed teams: Teams page → bulk assign Android/iOS libs to squads
+  D. Set deadlines: Libraries → edit each library → set deadline_date
+  E. Add Vitest test suite for ui-react
+
+================================================================================
+CRITICAL PATTERNS (for any AI tool continuing this work)
+================================================================================
+
+1.  No business logic in React frontend — all rules live in backend services
+2.  Backend-first + fallback pattern for additive backend fields
+3.  React Axios auto-injects JWT; unwraps { success, data } envelope
+4.  Per-button inline loaders via TanStack Query mutation isPending
+5.  GlobalAsyncLoader in Layout for global slow-query feedback
+6.  ALWAYS absolute imports in Streamlit UI pages — no relative imports
+7.  Module aliases in Streamlit: settings as settings_page, teams as teams_page
+8.  Schedule field = "cron" not "cron_expression"
+9.  Libraries (Streamlit): resp["data"]["libraries"]  (nested)
+10. Recommendations (Streamlit): resp["data"]          (direct list)
+11. Health /services returns LIST not dict → iterate, don't .values()
+12. NO HTML inside st.tabs() — use native Streamlit components only
+13. Viewer: reads all | writes only /api/v1/lifecycle | blocked elsewhere
+14. Pytest: run per service dir — combined multi-service run causes conftest clash
+15. Service restart required after router/code changes (no hot-reload in manage.sh)
+16. setup.sh --service scopes both dep install and manage.sh restart
+17. New React router checklist: backend → client.ts → types.ts → page → App.tsx → Sidebar.tsx

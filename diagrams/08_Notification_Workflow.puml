@@ -1,0 +1,60 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Notification_Workflow
+!theme plain
+skinparam shadowing false
+skinparam titleFontSize 16
+
+title Notification Workflow — Email & Teams\n(FR-011, FR-012, FR-013)
+
+|Recommendation Engine|
+start
+:Recommendation content ready\nfor all monitored libraries;
+
+|Notification Service|
+:Receive recommendation content;
+
+fork
+  |Email Channel (FR-011)|
+  :Format content for email;
+  :Build email message:\n----\n**Subject:** Library Version Update Report\n**Body:**\n• Library comparison summary\n• New version alerts\n• Upgrade recommendations\n• Pros and cons\n• Release notes excerpt\n----;
+  :Send to configured\nemail recipients;
+  if (Delivery OK?) then (yes)
+    :Log: Email Sent;
+    :Record Email Notification entity;
+  else (no)
+    :Log: Email Failed;
+    :Queue for retry;
+  endif
+
+fork again
+  |Teams Channel (FR-012)|
+  :Format content for Teams;
+  :Build Teams group message:\n----\n📚 Library Management Update\n• Version comparison results\n• Upgrade guidance\n• Pros/Cons summary\n----;
+  :Post to configured\nTeams group;
+  if (Post OK?) then (yes)
+    :Log: Teams Posted;
+    :Record Teams Notification entity;
+  else (no)
+    :Log: Teams Failed;
+    :Queue for retry;
+  endif
+
+end fork
+
+|Schedule Manager (FR-013)|
+:Update Last Run Date;
+:Calculate Next Run Date;
+:Wait for next regular schedule;
+
+stop
+
+note bottom
+  Both Email and Teams notifications
+  are sent **regularly** based on
+  the generated recommendation content
+end note
+
+@enduml

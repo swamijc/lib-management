@@ -1,0 +1,43 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Current_vs_Future_Process
+!theme plain
+skinparam shadowing false
+skinparam titleFontSize 16
+
+title Current Process vs Future Process
+
+|Current Process (As-Is)|
+start
+:Multiple libraries used\nacross applications;
+:Libraries maintained in DB\nwith version and information notes;
+note right
+  **Gaps (Not in current process)**
+  • No centralized pull/scrape of latest versions
+  • No automated version comparison
+  • No upgrade recommendation with pros/cons
+  • No regular email & Teams notification
+end note
+:Manual tracking of library versions\n(if any);
+stop
+
+|Future Process (To-Be)|
+start
+:#1 Retrieve existing library info\nfrom Database\n(version + information notes);
+:#2 Pull/Scrape latest library info\nfrom External Sources\n(version + release notes);
+:#3 Aggregation logic compares\nDB records vs latest available info;
+if (New version released?) then (yes)
+  :#4a Assess: Can upgrade\nor existing version sufficient?;
+  :#4b Generate pros and cons\nfor upgrading;
+  :#4c Generate pros and cons\nfor not upgrading;
+else (no)
+  :#4d Indicate existing version\nis current;
+endif
+:#5 Send Email notification\nwith generated content;
+:#5 Post Teams group message\nwith generated content;
+:Stakeholders informed on\nregular schedule;
+stop
+
+@enduml

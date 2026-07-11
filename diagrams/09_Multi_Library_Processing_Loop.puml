@@ -1,0 +1,51 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Multi_Library_Processing_Loop
+!theme plain
+skinparam shadowing false
+skinparam titleFontSize 16
+
+title Multi-Library Processing Loop\n(Libraries Used Across Multiple Applications)
+
+start
+
+:Initialize library processing run;
+:Get list of libraries in use\nacross organization applications;
+
+while (More libraries to process?) is (yes)
+
+  :Select next library;
+
+  partition "Per-Library Processing" {
+    :**Step 1** Read DB record\n(version + information notes);
+    :**Step 2** Pull/Scrape external\n(version + release notes);
+    :**Step 3** Aggregate DB + External data;
+    :**Step 4** Compare versions;
+    :**Step 5** Generate recommendation\nwith pros/cons;
+    :Add library result to\nbatch recommendation report;
+  }
+
+endwhile (no)
+
+:Combine all library results\ninto single notification content;
+
+fork
+  :Send consolidated Email;
+fork again
+  :Post consolidated Teams message;
+end fork
+
+:End processing run;
+
+stop
+
+note right
+  **Business Context**
+  Multiple libraries are currently
+  used in applications across
+  the organization
+end note
+
+@enduml

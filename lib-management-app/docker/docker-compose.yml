@@ -1,0 +1,193 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────
+#  SDK Management Application — Docker Compose (Production)
+#  Exposed to host:  :8000 (API Gateway)  :8501 (Streamlit UI)
+#  All other services are internal-only on lib-mgmt-net
+# ─────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── 1. API Gateway (:8000) ─────────────────────────────────────
+  api-gateway:
+    build:
+      context: ../services/api-gateway
+      dockerfile: Dockerfile
+    image: lib-mgmt/api-gateway:latest
+    container_name: lib-mgmt-api-gateway
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      library-data-service:
+        condition: service_healthy
+      scraper-service:
+        condition: service_healthy
+      comparison-service:
+        condition: service_healthy
+      recommendation-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      scheduler-service:
+        condition: service_healthy
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── 2. Library Data Service (:8001) ────────────────────────────
+  library-data-service:
+    build:
+      context: ../services/library-data-service
+      dockerfile: Dockerfile
+    image: lib-mgmt/library-data-service:latest
+    container_name: lib-mgmt-library-data
+    expose:
+      - "8001"
+    env_file: .env
+    volumes:
+      - ../db:/app/db:rw           # existing SQLite DB
+      - ../db/backups:/app/db/backups:rw   # automated backups (T6)
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── 3. Scraper Service (:8002) ─────────────────────────────────
+  scraper-service:
+    build:
+      context: ../services/scraper-service
+      dockerfile: Dockerfile
+    image: lib-mgmt/scraper-service:latest
+    container_name: lib-mgmt-scraper
+    expose:
+      - "8002"
+    env_file: .env
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── 4. Comparison Service (:8003) ──────────────────────────────
+  comparison-service:
+    build:
+      context: ../services/comparison-service
+      dockerfile: Dockerfile
+    image: lib-mgmt/comparison-service:latest
+    container_name: lib-mgmt-comparison
+    expose:
+      - "8003"
+    env_file: .env
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── 5. Recommendation Service (:8004) ──────────────────────────
+  recommendation-service:
+    build:
+      context: ../services/recommendation-service
+      dockerfile: Dockerfile
+    image: lib-mgmt/recommendation-service:latest
+    container_name: lib-mgmt-recommendation
+    expose:
+      - "8004"
+    env_file: .env
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── 6. Notification Service (:8005) ────────────────────────────
+  notification-service:
+    build:
+      context: ../services/notification-service
+      dockerfile: Dockerfile
+    image: lib-mgmt/notification-service:latest
+    container_name: lib-mgmt-notification
+    expose:
+      - "8005"
+    env_file: .env
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── 7. Scheduler Service (:8006) ───────────────────────────────
+  scheduler-service:
+    build:
+      context: ../services/scheduler-service
+      dockerfile: Dockerfile
+    image: lib-mgmt/scheduler-service:latest
+    container_name: lib-mgmt-scheduler
+    expose:
+      - "8006"
+    env_file: .env
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── 8. UI Service (:8501) ──────────────────────────────────────
+  ui-service:
+    build:
+      context: ../services/ui-service
+      dockerfile: Dockerfile
+    image: lib-mgmt/ui-service:latest
+    container_name: lib-mgmt-ui
+    ports:
+      - "8501:8501"
+    env_file: .env
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - lib-mgmt-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  lib-mgmt-net:
+    driver: bridge
+    name: lib-mgmt-net

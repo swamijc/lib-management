@@ -1,0 +1,122 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml End_to_End_Business_Workflow
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #E8F4FD
+  BorderColor #2E86AB
+  FontColor #1A1A1A
+}
+skinparam note {
+  BackgroundColor #FFF9E6
+  BorderColor #E6B800
+}
+skinparam titleFontSize 18
+
+title End-to-End Business Workflow\nLibrary Management Application
+
+|#LightBlue|Trigger|
+start
+:Regular schedule trigger fires;
+note right
+  **FR-013**
+  Notifications sent on a
+  regular basis based on
+  generated content
+end note
+
+|#LightGreen|Step 1 — Database|
+:Connect to existing Database;
+:Retrieve library records for\nlibraries in use across applications;
+:Read for each library:\n• Library Name\n• Current Version\n• Information Notes;
+if (Records found?) then (yes)
+  :Prepare database dataset\nfor aggregation;
+else (no)
+  :Flag missing database entry\nfor library;
+  :Log and continue with\nremaining libraries;
+endif
+
+|#LightYellow|Step 2 — External Sources|
+partition "For Each Monitored Library" {
+  :Identify external source\nfor library;
+  :Pull or Scrape latest library version;
+  :Pull or Scrape release notes\nfor latest version;
+  if (External source available?) then (yes)
+    :Store latest version\nand release notes;
+  else (no)
+    :Log retrieval failure;
+    :Continue with remaining libraries;
+  endif
+}
+
+|#LightCoral|Step 3 — Aggregation|
+:Combine database records with\nexternally retrieved library data;
+:Align data per library:\n• DB Version vs Latest Version\n• Information Notes\n• Release Notes;
+:Create aggregated library dataset\nready for comparison;
+
+|#Plum|Step 4 — Version Comparison|
+:Compare Latest Version\nagainst Database Version;
+if (New version released?) then (yes)
+  :Set comparison result:\n**New Version Available**;
+  :Record:\n• Database Version\n• Latest Version\n• Comparison Date;
+else (no)
+  :Set comparison result:\n**No New Version**;
+  :Record: Existing version is current;
+endif
+
+|#Wheat|Step 5 — Recommendation Generation|
+if (New version released?) then (yes)
+  :Assess upgrade decision:\n**Can upgrade?**\nor **Existing version sufficient?**;
+  partition "Upgrade Path Analysis" {
+    :Generate **Pros** for upgrading;
+    note right
+      Based on:
+      • Release notes content
+      • Version difference
+      • Information notes from DB
+    end note
+    :Generate **Cons** for upgrading;
+  }
+  partition "No-Upgrade Path Analysis" {
+    :Generate **Pros** for not upgrading;
+    :Generate **Cons** for not upgrading;
+  }
+  :Compile recommendation summary:\n• Upgrade recommended OR\n• Existing version sufficient\n• Pros/Cons for both paths;
+else (no)
+  :Generate guidance:\nExisting version is sufficient;
+  :Include current version status\nin recommendation content;
+endif
+:Produce final recommendation content\nfor all monitored libraries;
+
+|#HoneyDew|Step 6 — Email Notification|
+:Format recommendation content\nfor email delivery;
+:Prepare email:\n• Subject\n• Body with comparison results\n• Upgrade guidance and pros/cons;
+:Send email to configured recipients;
+if (Email sent successfully?) then (yes)
+  :Record email notification status: Sent;
+else (no)
+  :Log email delivery failure;
+  :Flag for retry or review;
+endif
+
+|#Lavender|Step 7 — Teams Notification|
+:Format recommendation content\nfor Teams group post;
+:Prepare Teams message:\n• Library status summary\n• Comparison results\n• Recommendations and pros/cons;
+:Post message to configured\nTeams group;
+if (Teams post successful?) then (yes)
+  :Record Teams notification status: Posted;
+else (no)
+  :Log Teams delivery failure;
+  :Flag for retry or review;
+endif
+
+|#LightBlue|Completion|
+:Update notification schedule:\nLast Run Date, Next Run Date;
+:Workflow run complete;
+stop
+
+@enduml

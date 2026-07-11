@@ -1,0 +1,19 @@
+[project]
+name = "library-data-service"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["..", "../../.."]   # includes shared/ from lib-management-app root
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+select = ["E", "W", "F", "I", "N", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true

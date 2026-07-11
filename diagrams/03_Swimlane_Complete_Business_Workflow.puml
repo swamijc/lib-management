@@ -1,0 +1,57 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Swimlane_Complete_Business_Workflow
+!theme plain
+skinparam shadowing false
+skinparam titleFontSize 16
+
+title Swimlane Diagram — Complete Business Workflow
+
+|Schedule|
+start
+:Regular schedule triggers run;
+
+|Database|
+:Retrieve library records;
+:Return version + information notes;
+
+|External Source|
+:Pull/Scrape latest version;
+:Pull/Scrape release notes;
+
+|Aggregation Logic|
+:Combine DB and external data;
+:Align per library;
+
+|Comparison Logic|
+:Compare versions;
+if (New version?) then (yes)
+  :Flag as new release;
+else (no)
+  :Flag as current;
+endif
+
+|Recommendation Engine|
+if (New version?) then (yes)
+  :Assess upgrade vs sufficient;
+  :Generate upgrade pros/cons;
+  :Generate no-upgrade pros/cons;
+else (no)
+  :State version is current;
+endif
+:Produce recommendation content;
+
+|Email Service|
+:Format and send email;
+
+|Teams Service|
+:Format and post to group;
+
+|Schedule|
+:Record run completion;
+:Set next run date;
+stop
+
+@enduml

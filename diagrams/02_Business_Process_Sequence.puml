@@ -1,0 +1,61 @@
+' Library Management Application — Business Workflow Diagram
+' Auto-split from library-management-business-workflow.puml
+' Render this file individually to avoid HTTP header size limits
+
+@startuml Business_Process_Sequence
+!theme plain
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam titleFontSize 16
+
+title Business Process Sequence Diagram\nComplete Library Management Run
+
+actor "Schedule Trigger" as Schedule
+participant "Library Management\nApplication" as App
+database "Existing Database" as DB
+participant "External Library\nSource" as Ext
+participant "Aggregation &\nComparison" as Logic
+participant "Recommendation\nEngine" as Rec
+participant "Email Service" as Email
+participant "Teams Service" as Teams
+actor "Recipients" as Users
+
+== Step 1: Read Existing Library Information ==
+Schedule -> App : Trigger regular run
+App -> DB : Retrieve library records
+DB --> App : Version + Information Notes\n(per library)
+
+== Step 2: Pull Latest Library Information ==
+loop For each library
+  App -> Ext : Pull/Scrape latest version
+  Ext --> App : Latest Version
+  App -> Ext : Pull/Scrape release notes
+  Ext --> App : Release Notes
+end
+
+== Step 3 & 4: Aggregation and Comparison ==
+App -> Logic : Send DB data + External data
+Logic -> Logic : Aggregate per library
+Logic -> Logic : Compare DB version vs Latest version
+Logic --> App : Comparison results\n(New version released: Y/N)
+
+== Step 5: Recommendation Generation ==
+App -> Rec : Send comparison results\n+ release notes + info notes
+Rec -> Rec : Assess: Upgrade or Existing sufficient?
+Rec -> Rec : Generate pros/cons for upgrade
+Rec -> Rec : Generate pros/cons for no-upgrade
+Rec --> App : Recommendation content
+
+== Step 6: Email Notification ==
+App -> Email : Send recommendation content
+Email -> Users : Deliver email notification
+Email --> App : Delivery status
+
+== Step 7: Teams Notification ==
+App -> Teams : Post recommendation content
+Teams -> Users : Deliver Teams group message
+Teams --> App : Post status
+
+App -> Schedule : Update next run schedule
+
+@enduml

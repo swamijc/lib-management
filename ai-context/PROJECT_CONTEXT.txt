@@ -1,0 +1,443 @@
+================================================================================
+  LIBRARY MANAGEMENT APPLICATION — PROJECT CONTEXT
+  Last Updated: 2026-07-01
+  Version: 4.0 (Production-Ready + React UI)
+================================================================================
+
+SYSTEM PROMPT / CONTEXT LOADER
+────────────────────────────────────────────────────────────────────────────────
+You are assisting with an ENTERPRISE Library Management Application that is
+FULLY BUILT AND TESTED. Read everything below before answering or writing code.
+
+================================================================================
+1. PROJECT SUMMARY
+================================================================================
+Name      : Library Management Application
+Purpose   : Centralize mobile SDK library version tracking, AI upgrade
+            recommendations, governance lifecycle, CVE security scanning,
+            team ownership, SLA enforcement, executive reporting.
+Status    : PRODUCTION-READY — all 9 services running, all tests pass
+Updated   : 2026-07-01
+Stack     : Python 3.12.12 · FastAPI · SQLAlchemy async · SQLite (aiosqlite)
+            JWT · passlib(pbkdf2_sha256) · litellm · httpx · structlog
+            React 18 · TypeScript 5 · Vite · TanStack Query v5 · Axios
+            Tailwind CSS · React Router v6
+            Streamlit 1.58 (legacy ui-service) · plotly · fpdf2 · pandas
+
+ARCHITECTURE RULE: All business logic lives in the backend.
+  The React UI is a pure display layer. No risk scores, priority thresholds,
+  criticality classifications, or analytics belong in the frontend.
+
+================================================================================
+2. ARCHITECTURE — 9 MICROSERVICES
+================================================================================
+Working dir: /Users/narasimman.saravana/Documents/lib-management/lib-management-app/
+
+SERVICE               PORT   ROLE
+─────────────────────────────────────────────────────────────────────────────
+library-data-service  8001   DB owner. All CRUD, audit, lifecycle, CVE,
+                             teams, SLA, LLM analytics, settings. 47+ endpoints.
+                             Enriched /sla/summary + backend lifecycle criticality.
+scraper-service        8002   Scrapes Maven, CocoaPods, SPM, GitHub, custom HTTP
+comparison-service     8003   Version comparison engine (major/minor/patch)
+recommendation-service 8004   Rule-based + LLM recommendations (litellm)
+notification-service   8005   Email (SMTP) + Teams (webhook), failure classification
+scheduler-service      8006   Cron pipeline orchestrator. Step-level timing,
+                              retry/retry-from-here support.
+api-gateway            8000   JWT auth + RBAC proxy. Admin writes, viewer reads.
+                             /api/v1/business/weekly-digest — backend analytics.
+ui-service             8501   Streamlit MPA — 15 pages (legacy)
+ui-react               3000   React 18 + TypeScript + Vite — primary dashboard
+─────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+3. DATABASE STATE (as of 2026-07-01)
+================================================================================
+Path: ./db/library_management.db (SQLite)
+
+TABLE               ROWS   NOTES
+─────────────────────────────────────────────────────────────────────────────
+libraries            119   74 Android, 45 iOS — real production SDK data
+application_teams      3   Android Core, iOS Core, Payments
+upgrade_lifecycle      7   3 Completed, 2 Pending, 1 Skipped, 1 Acknowledged
+library_update_log    17   Immutable audit trail
+llm_usage_log          7   Test + live LLM call records
+cve_cache              2   OSV.dev scan results cached
+version_history      211   Historical version records
+recommendations        0   Empty — run pipeline to generate
+pipeline_runs          0   1 run exists in scheduler-service (not library-data)
+users                  8   admin(active) + viewer(active) + 6 deactivated test users
+─────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+4. AUTHENTICATION & SECURITY
+================================================================================
+Login       : POST /auth/token  (username + password → JWT Bearer)
+Roles       : admin → full CRUD | viewer → read + lifecycle POST only
+Password    : pbkdf2_sha256 via passlib (NOT bcrypt — incompatible with v4.x)
+RBAC        : api-gateway proxy enforces: viewer POST/PUT/DELETE → 403
+              Exception: POST /api/v1/lifecycle allowed for viewer role
+Default     : admin / admin123 | viewer / viewer123
+React UI    : http://localhost:3000
+Streamlit   : http://localhost:8501
+JWT storage : localStorage key = access_token (React) | session_state (Streamlit)
+Interceptor : React axios client auto-injects Bearer token on every request
+              and redirects to /login on 401
+
+================================================================================
+5. UI PAGES
+================================================================================
+
+— React UI (PRIMARY — ui-react, port 3000) —
+
+VIEWER + ADMIN:
+  /dashboard             KPI strip, SLA metrics, risk score, platform distribution,
+                         priority counts, pending high-risk reviews (backend-computed)
+  /libraries             119-lib table, search + filters, bulk fetch/sync with loaders
+  /governance            Lifecycle state machine, backend confidence + criticality
+  /hitl-review           HITL pending queue, backend confidence_score + confidence_band
+  /scheduler             Pipeline trigger, step-level retry with inline loaders,
+                         run history, retry-from-here
+  /notification-reliability  Notification reliability stats, failure classification
+  /weekly-digest         Executive digest — fully backend-computed, no mock fallback
+
+ADMIN ONLY:
+  /settings              Platform settings, LLM config, threshold/policy drift alerts,
+                         per-key inline save loaders
+  /users                 User CRUD — inline loaders on create/deactivate/reactivate
+  /audit                 Paginated audit log
+  /analytics             LLM cost/token metrics, pipeline performance
+
+— Streamlit UI (LEGACY — ui-service, port 8501) —
+
+VIEWER + ADMIN: Dashboard · Libraries · Package Profile · Governance · System Health
+ADMIN ONLY:     Management · Teams · Reports · Scheduler · Notifications ·
+                Audit Trail · Analytics · Users · Settings (15 pages total)
+
+================================================================================
+6. ALL API ENDPOINTS
+================================================================================
+--- library-data-service (port 8001) ---
+
+LIBRARIES:
+  GET    /api/v1/libraries              list (default limit=100, max=1000)
+  POST   /api/v1/libraries              create (admin)
+  GET    /api/v1/libraries/{id}         get single
+  PUT    /api/v1/libraries/{id}         update → auto-writes audit log
+  DELETE /api/v1/libraries/{id}         delete (cascades ALL related records)
+  GET    /api/v1/libraries/critical     alert_priority=Critical
+  GET    /api/v1/libraries/platform/{p} filter by platform
+  GET    /api/v1/libraries/{id}/versions  all registry versions
+  POST   /api/v1/libraries/{id}/fetch-versions  scrape versions from registry
+  POST   /api/v1/libraries/{id}/set-current-version  set current version
+  POST   /api/v1/libraries/sync-maven-urls   bulk sync Maven URLs (admin)
+  POST   /api/v1/libraries/bulk-fetch-versions  bulk fetch all (admin)
+  GET    /api/v1/libraries/bulk-fetch-versions/status  poll bulk status
+
+VERSION HISTORY / RECOMMENDATIONS:
+  GET    /api/v1/version-history/{id}   version timeline for a library
+  GET    /api/v1/recommendations        all
+  GET    /api/v1/recommendations/{id}   by library_id
+
+PIPELINE RUNS (library-data-service):
+  GET    /api/v1/pipeline-runs          list
+  GET    /api/v1/pipeline-runs/active   currently running
+  GET    /api/v1/pipeline-runs/{run_id} with step details (from DB)
+
+AUDIT TRAIL:
+  GET    /api/v1/audit-log             filters: library_id, updated_by, date_from, date_to
+
+LIFECYCLE (enriched with backend analytics):
+  GET    /api/v1/lifecycle             list all; each item includes:
+                                        business_critical, confidence_score, confidence_band
+  GET    /api/v1/lifecycle/{lib_id}    for one library (same enriched fields)
+  POST   /api/v1/lifecycle             init (viewer allowed)
+  PUT    /api/v1/lifecycle/{id}        Acknowledged/Scheduled/In Progress/Skipped
+  PUT    /api/v1/lifecycle/{id}/complete   → auto-updates library + writes audit
+  PUT    /api/v1/lifecycle/{id}/reject
+  PUT    /api/v1/lifecycle/{id}/approve-no-action
+
+LLM ANALYTICS:
+  POST   /api/v1/llm/log              write usage entry (from rec-service)
+  GET    /api/v1/llm/usage            stats + model breakdown + per-lib cost
+
+CVE (OSV.dev):
+  GET    /api/v1/cve/{lib_id}         scan (cached) — ?force_refresh=true
+  GET    /api/v1/cve                  list cached scans
+
+TEAMS:
+  GET    /api/v1/teams                list with library counts
+  POST   /api/v1/teams                create team
+  GET    /api/v1/teams/{id}           detail with libraries list
+  PUT    /api/v1/teams/{id}           update
+  DELETE /api/v1/teams/{id}           delete (cascades ownerships)
+  POST   /api/v1/teams/assign         assign library to team
+  DELETE /api/v1/teams/assign/{l}/{t} unassign
+  GET    /api/v1/teams/library/{id}   teams owning a library
+
+SLA (enriched with backend analytics):
+  GET    /api/v1/sla/overdue          past deadline + still needs upgrade
+  GET    /api/v1/sla/approaching      deadline within N days (?days_ahead=30)
+  GET    /api/v1/sla/summary          enriched response includes:
+                                        compliance_percentage, overdue_count, totals
+                                        priority_counts, risk_score, sla_forecast
+                                        deprecated, pie_distribution, platform_distribution
+                                        pending_review_high_risk, at_risk_summary
+                                        owner_workload, rebalance_suggestion, backend_rules
+  GET    /api/v1/sla/release-notes/{id} fetch from GitHub API (needs repo_url)
+
+SETTINGS:
+  GET/PUT /api/v1/settings/llm        LLM provider config (key masked)
+  GET     /api/v1/settings/prompts    list prompt templates
+  PUT     /api/v1/settings/prompts/{key} upsert (bumps version)
+  GET     /api/v1/settings/app        13 app settings
+  PUT     /api/v1/settings/app/{key}  update one setting
+
+--- api-gateway (port 8000) ---
+  POST   /auth/token                  login → JWT
+  GET    /auth/me                     current user
+  GET    /auth/users                  list (admin)
+  POST   /auth/users                  create (admin)
+  PUT    /auth/users/{id}             update (admin)
+  DELETE /auth/users/{id}             deactivate (admin)
+  POST   /auth/change-password        change own password
+  GET    /health                      gateway health + threshold_alerts
+                                        + policy_drift_alerts + backend_rules
+  GET    /health/services             all services health (returns list, not dict)
+  GET    /api/v1/business/weekly-digest  backend-computed executive digest
+                                        (aggregates SLA, lifecycle, recommendations,
+                                         pipeline, notification stats server-side)
+
+--- scheduler-service (port 8006) ---
+  GET    /api/v1/schedule             cron config {cron, enabled, next_run, last_run}
+  PUT    /api/v1/schedule             update — FIELD IS "cron" NOT "cron_expression"
+  POST   /api/v1/run/now              trigger manual run
+  POST   /api/v1/run/retry            retry a single step {source_run_id, step}
+  POST   /api/v1/run/retry-from-here  retry step and all after it
+  GET    /api/v1/runs                 list runs with step details
+  GET    /api/v1/runs/{run_id}        single run with full step data:
+                                      {step, status, message, items_processed,
+                                       duration_seconds, started_at, finished_at}
+  Steps: fetch_libraries → batch_scrape → batch_compare → batch_recommend → notify
+
+--- recommendation-service (port 8004) ---
+  GET    /api/v1/recommendations
+  POST   /api/v1/recommendations/generate/{id}
+  POST   /api/v1/recommendations/generate/batch
+  POST   /api/v1/recommendations/test-llm
+
+--- notification-service (port 8005) ---
+  GET    /api/v1/notifications
+  POST   /api/v1/notify/email
+  POST   /api/v1/notify/teams
+  POST   /api/v1/notify/both
+
+================================================================================
+7. KEY TECHNICAL PATTERNS (critical — always follow these)
+================================================================================
+
+REACT UI (ui-react):
+  Axios baseURL = "/" (proxied to api-gateway by Vite)
+  Interceptor 1: injects Authorization: Bearer from localStorage access_token
+  Interceptor 2: unwraps { success, data } envelope → exposes just data
+  Interceptor 3: 401 → clear localStorage → redirect to /login
+  All API calls through src/api/client.ts named modules (authApi, libraryApi, etc.)
+  Error parsing: parseApiError() normalises all error shapes to a user-facing string
+  No business logic in frontend — backend-first with compatibility fallback pattern:
+    if (backendData?.backend_rules?.risk_score !== undefined) use it; else compute locally
+
+BACKEND-FIRST WITH FALLBACK (migration pattern):
+  Backend returns additive enriched fields; UI prefers them but falls back to
+  locally computable values. This allows phased backend migration without UI breakage.
+  Fields: backend_rules, business_critical, confidence_score, confidence_band,
+          priority_counts, risk_score, sla_forecast, pie_distribution, etc.
+
+PER-BUTTON INLINE LOADERS (React):
+  Use TanStack Query mutation isPending per button action (NOT a page-level spinner).
+  Applied on: scheduler retry actions, settings per-key save, library bulk-fetch/sync,
+  user create/deactivate/reactivate.
+
+GLOBAL ASYNC LOADER:
+  GlobalAsyncLoader component mounted in Layout.tsx.
+  Shows delayed global loading indicator with min-visible anti-flicker behavior.
+  Only activates for slow queries/mutations; does not replace per-button loaders.
+
+WEEKLY DIGEST:
+  businessApi.weeklyDigest → GET /api/v1/business/weekly-digest
+  Fully backend-computed. No mock fallback object.
+  UI shows loading / error / empty state with retry button.
+
+IMPORTS (ALL Streamlit UI pages):
+  Use ABSOLUTE imports only:  from src.X import Y
+  NOT relative: from ..X import Y  (Streamlit runner breaks relative imports)
+
+MODULE ALIASING (Streamlit, avoid shadowing config.settings):
+  from src.pages import settings as settings_page
+  from src.pages import teams as teams_page
+
+SCHEDULE FIELD NAME:
+  PUT /api/v1/schedule → body field = "cron"  (NOT "cron_expression")
+
+LIBRARY API — data is nested (Streamlit client):
+  libs = resp.get("data", {}).get("libraries", [])   # data.libraries
+
+RECOMMENDATIONS API — data is a LIST directly (Streamlit):
+  recs = resp.get("data") or []    # NOT data.get("recommendations")
+
+LIFECYCLE COMPLETE auto-effects:
+  → library.current_version = completed_version
+  → library.update_needed = "none"
+  → writes library_update_log entry (type="lifecycle_complete")
+
+HEALTH ENDPOINT returns LIST not dict:
+  services = resp.get("services", [])    # NOT .values()
+
+CASCADE DELETE (deleting a library removes):
+  version_history, recommendations, external_sources, update_logs (audit),
+  upgrade_lifecycle, scrape_caches, cve_caches, ownerships
+
+UI — NO HTML in Streamlit tabs:
+  st.markdown(html, unsafe_allow_html=True) DOES NOT render inside st.tabs()
+  Use native: st.success/error/warning/info/metric/container(border=True)
+
+LLM USAGE LOGGING:
+  After each LLM call → recommendation-service fires background POST /api/v1/llm/log
+  Cost auto-calculated in llm_analytics.py pricing table
+
+NEW ROUTER CHECKLIST (Streamlit stack):
+  1. Register in library-data-service/src/main.py
+  2. Add route to api-gateway middleware/proxy.py
+  3. Add client methods in ui-service/src/api/client.py
+  4. Import and use in a UI page
+  5. Add to navigation in app.py (with alias if needed)
+
+NEW ROUTER CHECKLIST (React stack):
+  1. Register in the relevant backend service main.py
+  2. Add method to src/api/client.ts
+  3. Add types to src/api/types.ts
+  4. Create/update page component in src/pages/
+  5. Add route to src/App.tsx
+  6. Add sidebar entry to src/components/Sidebar.tsx
+
+PAGINATION:
+  GET /api/v1/libraries default limit=100, max=1000
+  React client always requests limit=1000
+
+VIEWER ROLE:
+  Reads: ALL /api/v1/* endpoints
+  Writes: POST /api/v1/lifecycle only
+  Blocked: all other writes → 403
+
+PYTEST — run per service (NOT combined):
+  cd services/library-data-service && python3 -m pytest tests/ -v
+  Running multiple service test dirs in one pytest call causes conftest import mismatch.
+
+SERVICE RESTART after code changes:
+  manage.sh does NOT hot-reload; always restart affected service after router changes.
+  bash manage.sh restart api-gateway   (or library-data-service, etc.)
+
+================================================================================
+8. SCHEDULER PAGE DETAILS (React — ui-react)
+================================================================================
+
+Schedule view:
+  - View/edit cron config, enable/disable, next_run display
+
+Manual Trigger:
+  - Trigger button with per-button inline loader (isPending)
+  - Polls run status after trigger
+  - Shows 5 step cards: fetch_libraries → batch_scrape → batch_compare
+                         → batch_recommend → notify
+  - Per-step retry (retryStage) and retry-from-here (retryFromHere)
+    with separate inline loaders per step button
+
+Run History:
+  - Table of all runs with status, duration, step summary
+  - Drill-down per run
+
+================================================================================
+9. SETUP & OPERATIONS (setup.sh + manage.sh)
+================================================================================
+
+setup.sh — One-shot bootstrap (enhanced 2026-07-01):
+  ./setup.sh                                        # full setup + start all
+  ./setup.sh --no-start                             # setup only, don't start
+  ./setup.sh --reset                                # drop DB + re-setup
+  ./setup.sh --service api-gateway                  # setup one service
+  ./setup.sh --service lib-data-service,scheduler   # setup selected services
+  ./setup.sh --service ui-react --force-deps        # force npm reinstall
+  ./setup.sh --help                                 # show usage
+
+  Dependency install optimizations:
+  - Python: skips pip install when combined_requirements.sha256 hash unchanged
+  - Node: skips npm install when package.json/package-lock.json hash unchanged
+  - Uses npm ci when package-lock.json exists; npm install otherwise
+  - --force-deps bypasses hash checks
+
+manage.sh — Service lifecycle (9 services):
+  bash manage.sh start                     # start all 9 services
+  bash manage.sh start api-gateway         # start one
+  bash manage.sh stop  scheduler-service   # stop one
+  bash manage.sh restart ui-react          # restart one
+  bash manage.sh restart all               # rolling restart
+  bash manage.sh status                    # live status table
+  bash manage.sh logs  scraper-service     # tail log
+  bash manage.sh health                    # ping all /health endpoints
+
+  Known service names (must match exactly):
+  api-gateway, library-data-service, scraper-service, comparison-service,
+  recommendation-service, notification-service, scheduler-service,
+  ui-service, ui-react
+
+Makefile targets (Docker workflow):
+  make build        build all Docker images
+  make up           start all services (detached)
+  make down         stop all
+  make test         run all tests
+  make lint         ruff linter
+  make typecheck    mypy
+  make security-scan  pip-audit on all requirements.txt
+
+Log files: run/logs/<service>.log
+PID files: run/pids/<service>.pid
+DB:        db/library_management.db
+
+================================================================================
+10. TEST RESULTS (2026-07-01)
+================================================================================
+All 9 service test suites pass. Run each service separately:
+
+  library-data-service    25 passed
+  api-gateway             15 passed
+  scraper-service         34 passed
+  comparison-service      24 passed
+  recommendation-service  25 passed
+  notification-service    12 passed
+  scheduler-service       19 passed
+  ui-service              38 passed
+  (ui-react has no automated test suite yet)
+
+IMPORTANT: run pytest per service directory — combined multi-service pytest
+  invocations cause conftest import-path mismatch (tests.conftest collision).
+
+================================================================================
+11. REMAINING ROADMAP (P2/P3 — not built)
+================================================================================
+P2 (Next Quarter):
+  - SLA auto-escalation engine (scheduler auto-notifies on overdue)
+  - Approval workflow for upgrades (manager sign-off before implementation)
+  - In-app notification bell (badge + feed in sidebar)
+  - License compliance + SBOM export (SPDX/CycloneDX)
+  - Bulk import from Gradle/Podfile/Package.swift
+  - GitHub Actions CI/CD integration (PR comment on dependency change)
+  - Vitest / Jest test suite for ui-react
+
+P3 (Strategic):
+  - PostgreSQL migration (production DB)
+  - Docker / Kubernetes deployment
+  - SSO / SAML (Azure AD, Okta)
+  - Prometheus + Grafana observability
+  - Slack bot (/lib-status {package})
+  - Multi-app support (track across multiple apps/repos)
+  - Natural language search (Text-to-SQL via LLM)
+  - Fine-tuning data collection + RAG knowledge base
