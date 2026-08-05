@@ -1,3 +1,5 @@
+version: "3.9"
+
 # ─────────────────────────────────────────────────────────────────
 #  SDK Management Application — Docker Compose (Production)
 #  Exposed to host:  :8000 (API Gateway)  :8501 (Streamlit UI)
@@ -33,7 +35,7 @@ services:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -50,13 +52,13 @@ services:
       - "8001"
     env_file: .env
     volumes:
-      - ../db:/app/db:rw                   # existing SQLite DB
+      - ../db:/app/db:rw           # existing SQLite DB
       - ../db/backups:/app/db/backups:rw   # automated backups (T6)
     networks:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -76,7 +78,7 @@ services:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -96,7 +98,7 @@ services:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -116,7 +118,7 @@ services:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -136,7 +138,7 @@ services:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -156,7 +158,7 @@ services:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -171,8 +173,6 @@ services:
     container_name: lib-mgmt-ui
     ports:
       - "8501:8501"
-    environment:
-      PYTHONPATH: /app
     env_file: .env
     depends_on:
       api-gateway:
@@ -181,7 +181,7 @@ services:
       - lib-mgmt-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8501/healthz"]
       interval: 30s
       timeout: 5s
       retries: 3
