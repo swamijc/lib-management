@@ -2,3 +2,22 @@
 2026-07-12 - Captured React app screenshots for login, dashboard, libraries, governance, scheduler, notification reliability, weekly digest, audit, analytics, settings, and users pages.
 2026-07-12 - User requested removal of the Photon logo before the SDK Governance Hub / Enterprise Upgrade Platform section.
 2026-07-12 - User requested a client-facing PPT deck explaining the application's features, advantages, and how it works.
+=== 2026-08-05: Cloud Backend Crash Fix Session ===
+Diagnosing and fixing Azure Container App backend (sdk-mgmt-backend) CrashLoopBackOff.
+
+Root causes found (via local docker run test):
+1. supervisord==4.2.5 requires pkg_resources (setuptools) which is NOT present in setuptools>=71
+2. alembic.ini script_location = migrations → was correct (CWD-relative), had incorrectly changed it to '.'
+3. bootstrap_database.py create_schema() looked for services at wrong path in container
+4. migration 001 assumes libraries table exists (from PDF import), fails on fresh DB
+
+Fixes applied:
+- Replaced supervisord entirely with a shell-based process manager in entrypoint.sh
+- Removed supervisor==4.2.5 and setuptools>=75.0 from requirements.txt
+- Reverted alembic.ini to script_location = migrations
+- Fixed bootstrap service path to try /app/services/ first
+- Made migration 001 idempotent for op.add_column on libraries table
+- Added --set-env-vars to workflow update step
+- Entrypoint now preserves seed_data.json before symlink + sets PYTHONPATH for bootstrap
+
+Deploy #9 is in progress (commit 1c400d3) - expected to fix the container.
