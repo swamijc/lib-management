@@ -41,11 +41,26 @@ def sqlite_db_path() -> Path:
 
 
 async def create_schema() -> None:
-    sys.path.insert(0, str(APP_ROOT))
-    sys.path.insert(0, str(APP_ROOT / "services" / "library-data-service"))
+    # Try the Docker image path first (/app/services/), then fall back to the
+    # local development path (/app/lib-management-app/services/).
+    service_candidates = [
+        Path("/app") / "services" / "library-data-service",
+        APP_ROOT / "services" / "library-data-service",
+    ]
+    service_path = next((p for p in service_candidates if p.exists()), None)
+    if service_path is None:
+        print("library-data-service not found — skipping SQLAlchemy schema creation")
+        return
 
-    from src.database import Base, engine  # type: ignore
-    from src.models import orm  # noqa: F401  # type: ignore
+    sys.path.insert(0, str(APP_ROOT))
+    sys.path.insert(0, str(service_path))
+
+    try:
+        from src.database import Base, engine  # type: ignore
+        from src.models import orm  # noqa: F401  # type: ignore
+    except ImportError as exc:
+        print(f"Cannot import service models ({exc}) — skipping SQLAlchemy schema creation")
+        return
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

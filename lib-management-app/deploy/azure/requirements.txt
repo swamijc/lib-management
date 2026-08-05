@@ -21,6 +21,5 @@ slowapi==0.1.9
 sqlalchemy[asyncio]==2.0.36
 streamlit==1.40.2
 structlog==24.4.0
-supervisor==4.2.5
 tenacity==9.0.0
 uvicorn[standard]==0.32.1

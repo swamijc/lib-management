@@ -25,10 +25,6 @@ COPY services/recommendation-service/ /app/services/recommendation-service/
 COPY services/notification-service/  /app/services/notification-service/
 COPY services/scheduler-service/  /app/services/scheduler-service/
 
-# supervisord config
-RUN mkdir -p /etc/supervisor/conf.d /var/log
-COPY deploy/azure/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
 # entrypoint
 COPY deploy/azure/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
