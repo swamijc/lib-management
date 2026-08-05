@@ -1,35 +1,42 @@
-name: Build and Push Docker Image
-
+name: Build and Push Docker Images
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   docker:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
-
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ui-service
+          - scraper-service
+          - scheduler-service
+          - comparison-service
+          - library-data-service
+          - notification-service
+          - recommendation-service
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build and Push
+      - name: Build and Push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: lib-management-app/services/${{ matrix.service }}
+          file: lib-management-app/services/${{ matrix.service }}/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/sdkapp:latest
-            ${{ secrets.DOCKER_USERNAME }}/sdkapp:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
+            ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
