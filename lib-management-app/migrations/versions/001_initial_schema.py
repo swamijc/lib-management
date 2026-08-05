@@ -278,11 +278,21 @@ def upgrade() -> None:
     op.create_index("idx_llm_usage_run", "llm_usage_log", ["run_id"])
 
     # ── New columns on libraries table (B7 critical alerts + multi-framework) ─
-    op.add_column("libraries", sa.Column("alert_priority", sa.Text, server_default="Normal"))
-    op.add_column("libraries", sa.Column("deadline_date", sa.Text))
-    op.add_column("libraries", sa.Column("deadline_notes", sa.Text))
-    op.add_column("libraries", sa.Column("ecosystem", sa.Text, server_default="mobile"))
-    op.add_column("libraries", sa.Column("framework_language", sa.Text))
+    # These columns are added to the existing libraries table, but may not exist
+    # in fresh deployments. Check first to make the migration idempotent.
+    import sqlalchemy as _sa
+    _insp = _sa.inspect(op.get_bind())
+    if "libraries" in _insp.get_table_names():
+        _existing = {c["name"] for c in _insp.get_columns("libraries")}
+        for _col_name, _col in [
+            ("alert_priority", sa.Column("alert_priority", sa.Text, server_default="Normal")),
+            ("deadline_date", sa.Column("deadline_date", sa.Text)),
+            ("deadline_notes", sa.Column("deadline_notes", sa.Text)),
+            ("ecosystem", sa.Column("ecosystem", sa.Text, server_default="mobile")),
+            ("framework_language", sa.Column("framework_language", sa.Text)),
+        ]:
+            if _col_name not in _existing:
+                op.add_column("libraries", _col)
 
     # ── Immutability triggers on library_update_log (T11) ────────────────────
     # Raw SQL triggers — not expressible via Alembic column API
