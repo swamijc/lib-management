@@ -81,7 +81,16 @@ jobs:
             az containerapp update \
               --name "${{ env.BACKEND_APP }}" \
               --resource-group "${{ env.RESOURCE_GROUP }}" \
-              --image "$IMAGE"
+              --image "$IMAGE" \
+              --set-env-vars \
+                "DATABASE_URL=sqlite+aiosqlite:////data/db/library_management.db" \
+                "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" \
+                "INTERNAL_SERVICE_KEY=${{ secrets.INTERNAL_SERVICE_KEY }}" \
+                "DEFAULT_ADMIN_PASSWORD=${{ secrets.DEFAULT_ADMIN_PASSWORD }}" \
+                "LLM_API_KEY=${{ secrets.LLM_API_KEY }}" \
+                "LLM_PROVIDER=openai" \
+                "LLM_MODEL=gpt-4o-mini" \
+                "SCHEDULE_ENABLED=true"
           else
             az containerapp create \
               --name "${{ env.BACKEND_APP }}" \
