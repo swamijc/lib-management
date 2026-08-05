@@ -47,3 +47,4 @@ lib-management-app/run/*.sha256
 .DS_Store
 .idea/
 .vscode/
+.copilot-azure/

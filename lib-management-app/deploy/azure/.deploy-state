@@ -1,0 +1,6 @@
+ACR_NAME="sdkmgmtacre5948e"
+ACR_SERVER="sdkmgmtacre5948e.azurecr.io"
+BACKEND_APP="sdk-mgmt-backend"
+FRONTEND_APP="sdk-mgmt-frontend"
+CONTAINER_APP_ENV="sdk-mgmt-env"
+RESOURCE_GROUP="sdk-management-rg"

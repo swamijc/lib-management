@@ -1,6 +1,10 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/', timeout: 30000 })
+// In production the build sets VITE_API_BASE_URL to the Container Apps backend URL.
+// In dev the Vite proxy handles routing so '/' works fine.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/'
+
+const api = axios.create({ baseURL: API_BASE, timeout: 30000 })
 
 type ApiErrorBody = {
   detail?: string | { msg?: string; loc?: unknown[] }[] | unknown

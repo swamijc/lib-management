@@ -1,0 +1,176 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  RESOURCE_GROUP: sdk-management-rg
+  ACR_NAME: sdkmgmtacre5948e
+  ACR_SERVER: sdkmgmtacre5948e.azurecr.io
+  BACKEND_APP: sdk-mgmt-backend
+  FRONTEND_APP: sdk-mgmt-frontend
+  CONTAINER_APP_ENV: sdk-mgmt-env
+  LOCATION: eastus
+
+jobs:
+  # ── Build & push Docker image ───────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push Backend Image
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_SERVER }}
+          username: ${{ env.ACR_NAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push Docker image
+        id: meta
+        run: |
+          IMAGE="${{ env.ACR_SERVER }}/${{ env.BACKEND_APP }}:${{ github.sha }}"
+          docker build \
+            -f lib-management-app/deploy/azure/Dockerfile \
+            -t "$IMAGE" \
+            lib-management-app/
+          docker push "$IMAGE"
+          # Also tag as latest
+          docker tag "$IMAGE" "${{ env.ACR_SERVER }}/${{ env.BACKEND_APP }}:latest"
+          docker push "${{ env.ACR_SERVER }}/${{ env.BACKEND_APP }}:latest"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  # ── Deploy backend to Azure Container Apps ──────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Container Apps extension
+        run: az extension add --name containerapp --upgrade -y
+
+      - name: Create Container Apps environment (if not exists)
+        run: |
+          if ! az containerapp env show \
+              --name "${{ env.CONTAINER_APP_ENV }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" &>/dev/null; then
+            az containerapp env create \
+              --name "${{ env.CONTAINER_APP_ENV }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --location "${{ env.LOCATION }}"
+          fi
+
+      - name: Deploy or update Container App
+        run: |
+          IMAGE="${{ needs.build-and-push.outputs.image }}"
+          if az containerapp show \
+              --name "${{ env.BACKEND_APP }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" &>/dev/null; then
+            az containerapp update \
+              --name "${{ env.BACKEND_APP }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --image "$IMAGE"
+          else
+            az containerapp create \
+              --name "${{ env.BACKEND_APP }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --environment "${{ env.CONTAINER_APP_ENV }}" \
+              --image "$IMAGE" \
+              --registry-server "${{ env.ACR_SERVER }}" \
+              --registry-username "${{ env.ACR_NAME }}" \
+              --registry-password "${{ secrets.ACR_PASSWORD }}" \
+              --target-port 8000 \
+              --ingress external \
+              --min-replicas 1 \
+              --max-replicas 1 \
+              --cpu 2 \
+              --memory 4Gi \
+              --env-vars \
+                "DATABASE_URL=sqlite+aiosqlite:////data/db/library_management.db" \
+                "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" \
+                "INTERNAL_SERVICE_KEY=${{ secrets.INTERNAL_SERVICE_KEY }}" \
+                "DEFAULT_ADMIN_PASSWORD=${{ secrets.DEFAULT_ADMIN_PASSWORD }}" \
+                "LLM_API_KEY=${{ secrets.LLM_API_KEY }}" \
+                "LLM_PROVIDER=openai" \
+                "LLM_MODEL=gpt-4o-mini" \
+                "SCHEDULE_ENABLED=true"
+          fi
+
+      - name: Output backend URL
+        id: backend-url
+        run: |
+          FQDN=$(az containerapp show \
+            --name "${{ env.BACKEND_APP }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "BACKEND_URL=https://$FQDN" >> "$GITHUB_ENV"
+          echo "Backend: https://$FQDN"
+
+  # ── Deploy React frontend to Azure Static Web Apps ──────────────────────────
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get backend URL
+        run: |
+          FQDN=$(az containerapp show \
+            --name "${{ env.BACKEND_APP }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "VITE_API_BASE_URL=https://$FQDN" >> "$GITHUB_ENV"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: lib-management-app/services/ui-react/package-lock.json
+
+      - name: Build React app
+        working-directory: lib-management-app/services/ui-react
+        run: |
+          npm ci
+          VITE_API_BASE_URL="${{ env.VITE_API_BASE_URL }}" npm run build
+
+      - name: Create Static Web App (if not exists)
+        run: |
+          if ! az staticwebapp show \
+              --name "${{ env.FRONTEND_APP }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" &>/dev/null; then
+            az staticwebapp create \
+              --name "${{ env.FRONTEND_APP }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --location eastus2 \
+              --sku Free
+          fi
+
+      - name: Deploy to Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOY_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: lib-management-app/services/ui-react/dist
+          skip_app_build: true
+          output_location: ''

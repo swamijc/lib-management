@@ -207,15 +207,7 @@ export default function Sidebar() {
       className="fixed top-0 left-0 h-full flex flex-col sidebar-shell"
       style={{ width: 'var(--sidebar-width)', background: 'var(--photon-navy)', zIndex: 40 }}
     >
-      {/* Logo */}
       <div className="sidebar-brand">
-        <div className="sidebar-brand-icon bg-white/95 border border-white/25 shadow-sm px-2 py-1.5">
-          <img
-            src="https://www.photon.com/themes/custom/photon/images/logo_photon.svg"
-            alt="Photon Logo"
-            className="w-full h-full object-contain"
-          />
-        </div>
         <div className="min-w-0 sidebar-brand-text-wrap">
           <p className="sidebar-brand-title">SDK Governance Hub</p>
           <p className="sidebar-brand-subtitle" style={{ color: 'var(--photon-orange)' }}>Enterprise Upgrade Platform</p>
